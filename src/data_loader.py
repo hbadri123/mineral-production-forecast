@@ -70,3 +70,31 @@ def load_prices_xls(path):
     out = df[keep].set_index("date").sort_index()
     
     return out
+
+def make_features(panel, mineral, horizon=3):
+    """Create features for forecasting"""
+    y_name = f"production_{mineral}"
+    if y_name not in panel.columns:
+        raise ValueError(f"Missing {y_name}")
+    
+    y = panel[y_name]
+    
+    features = {}
+    features["y_level"] = y
+    
+    # Add lags
+    for lag in [1, 3, 6, 12]:
+        features[f"y_lag_{lag}"] = y.shift(lag)
+    
+    # Target
+    y_target = y.shift(-horizon)
+    
+    # Combine
+    X = pd.DataFrame(features, index=panel.index)
+    
+    # Drop rows with missing values
+    valid = X.notna().all(axis=1) & y_target.notna()
+    X = X.loc[valid]
+    y_out = y_target.loc[valid]
+    
+    return X, y_out

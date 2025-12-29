@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 
 class NaiveBaseline:
     """Naive forecast: predict last value"""
@@ -33,3 +34,21 @@ class HistoricalMeanBaseline:
         if self.mean_ is None:
             raise RuntimeError("Model not fitted")
         return np.full(len(X), self.mean_, dtype=float)
+
+class RandomForestModel:
+    """Random Forest model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "random_forest"
+        self.model = RandomForestRegressor(
+            n_estimators=100,
+            random_state=random_state,
+            n_jobs=-1
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)

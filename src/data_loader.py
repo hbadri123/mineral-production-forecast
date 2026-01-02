@@ -82,9 +82,16 @@ def make_features(panel, mineral, horizon=3):
     features = {}
     features["y_level"] = y
     
-    # Add lags
+    # Production lags
     for lag in [1, 3, 6, 12]:
         features[f"y_lag_{lag}"] = y.shift(lag)
+    
+    # Price features
+    price_col = f"price_{mineral}"
+    if price_col in panel.columns:
+        p = panel[price_col]
+        for lag in [1, 2, 3]:
+            features[f"price_lag_{lag}"] = p.shift(lag)
     
     # Target
     y_target = y.shift(-horizon)

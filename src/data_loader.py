@@ -125,3 +125,48 @@ def make_features(panel, mineral, horizon=3):
     y_out = y_target.loc[valid]
     
     return X, y_out
+
+def load_macro_data(filepath, series_name):
+    """Load macro economic data from excel"""
+    df = pd.read_excel(filepath, sheet_name="Monthly")
+    
+    # Find date column
+    date_col = None
+    for col in df.columns:
+        if "date" in str(col).lower() or "observation" in str(col).lower():
+            date_col = col
+            break
+    if date_col is None:
+        date_col = df.columns[0]
+    
+    # Convert to datetime
+    df["date"] = pd.to_datetime(df[date_col], errors="coerce")
+    df = df.dropna(subset=["date"])
+    df = df.set_index("date").sort_index()
+    
+    # Find value column (first numeric column)
+    for col in df.columns:
+        if col != date_col:
+            try:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+                if df[col].notna().sum() > 0:
+                    out = df[[col]].rename(columns={col: series_name})
+                    return out
+            except:
+                continue
+    
+    raise ValueError(f"Could not find numeric column in {filepath}")
+
+def load_all_data(data_dir):
+    """Load all data sources"""
+    data_dir = Path(data_dir)
+    
+    sources = {}
+    sources["production"] = load_production_sales_xlsx(data_dir / "production_sales.xlsx")
+    sources["prices"] = load_prices_xls(data_dir / "prices.xls")
+    sources["cpi"] = load_macro_data(data_dir / "cpi.xlsx", "cpi")
+    sources["exrate"] = load_macro_data(data_dir / "EXSFUS.xlsx", "exrate_zar_usd")
+    sources["ipi"] = load_macro_data(data_dir / "industrial_production_index.xlsx", 
+                                      "industrial_production_index")
+    
+    return sources

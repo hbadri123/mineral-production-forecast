@@ -1,6 +1,26 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
+
+class XGBoostModel:
+    """XGBoost model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "xgboost"
+        self.model = XGBRegressor(
+            n_estimators=200,
+            learning_rate=0.1,
+            random_state=random_state,
+            n_jobs=-1
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
 
 class NaiveBaseline:
     """Naive forecast: predict last value"""

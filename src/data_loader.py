@@ -64,10 +64,30 @@ def load_prices_xls(path):
     df["date"] = periods.apply(lambda p: p.to_timestamp() if p else None)
     df = df.dropna(subset=["date"])
     
-    # Keep price columns
-    price_tickers = ["PGOLD", "PCOAL", "PIORECR", "PCOPP"]
-    keep = ["date"] + [c for c in price_tickers if c in df.columns]
+    # Map tickers to minerals
+    ticker_to_mineral = {
+        "PGOLD": "Gold",
+        "PCOAL": "Coal",
+        "PIORECR": "Iron ore",
+        "PCOPP": "Copper"
+    }
+    
+    keep = ["date"]
+    for ticker, mineral in ticker_to_mineral.items():
+        if ticker in df.columns:
+            keep.append(ticker)
+    
     out = df[keep].set_index("date").sort_index()
+    
+    # Rename columns
+    rename = {ticker: f"price_{mineral}" 
+              for ticker, mineral in ticker_to_mineral.items() 
+              if ticker in out.columns}
+    out = out.rename(columns=rename)
+    
+    # Convert to numeric
+    for col in out.columns:
+        out[col] = pd.to_numeric(out[col], errors="coerce")
     
     return out
 

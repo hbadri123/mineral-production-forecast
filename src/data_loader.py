@@ -170,3 +170,24 @@ def load_all_data(data_dir):
                                       "industrial_production_index")
     
     return sources
+
+
+def build_panel(sources, start_date="1990-01-01", end_date="2002-12-01"):
+    """Combine all data sources into single panel"""
+    # Create date range
+    date_range = pd.date_range(start_date, end_date, freq="MS")
+    
+    # Combine all dataframes
+    parts = []
+    for name, df in sources.items():
+        parts.append(df)
+    
+    panel = pd.concat(parts, axis=1)
+    panel = panel.reindex(date_range)
+    panel = panel.sort_index()
+    
+    # Fill missing values (simple forward fill for now)
+    panel = panel.fillna(method="ffill")
+    panel = panel.interpolate()
+    
+    return panel

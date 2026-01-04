@@ -110,8 +110,16 @@ def make_features(panel, mineral, horizon=3):
     price_col = f"price_{mineral}"
     if price_col in panel.columns:
         p = panel[price_col]
-        for lag in [1, 2, 3]:
+        for lag in [1, 2, 3, 4, 5, 6]:
             features[f"price_lag_{lag}"] = p.shift(lag)
+    
+    # Macro features
+    macro_cols = ["cpi", "exrate_zar_usd", "industrial_production_index"]
+    for col in macro_cols:
+        if col in panel.columns:
+            s = panel[col]
+            for lag in [1, 2, 3]:
+                features[f"{col}_lag_{lag}"] = s.shift(lag)
     
     # Target
     y_target = y.shift(-horizon)

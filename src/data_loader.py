@@ -197,3 +197,54 @@ def build_panel(sources, start_date="1990-01-01", end_date="2002-12-01"):
     panel = panel.interpolate(method="time")  # Time-based interpolation
     
     return panel
+
+
+def make_features(panel, mineral, horizon=3):
+    """Create features for forecasting"""
+    y_name = f"production_{mineral}"
+    if y_name not in panel.columns:
+        raise ValueError(f"Missing {y_name}")
+    
+    y = panel[y_name]
+    
+    features = {}
+    features["y_level"] = y
+    
+    # Production lags
+    for lag in [1, 3, 6, 12]:
+        features[f"y_lag_{lag}"] = y.shift(lag)
+    
+    # Rolling features
+    for window in [3, 6, 12]:
+        features[f"y_roll_mean_{window}"] = y.rolling(window=window).mean()
+        features[f"y_roll_std_{window}"] = y.rolling(window=window).std()
+    
+    # Price features
+    price_col = f"price_{mineral}"
+    if price_col in panel.columns:
+        p = panel[price_col]
+        for lag in [1, 2, 3, 4, 5, 6]:
+            features[f"price_lag_{lag}"] = p.shift(lag)
+        for window in [3, 6, 12]:
+            features[f"price_roll_mean_{window}"] = p.rolling(window=window).mean()
+    
+    # Macro features
+    macro_cols = ["cpi", "exrate_zar_usd", "industrial_production_index"]
+    for col in macro_cols:
+        if col in panel.columns:
+            s = panel[col]
+            for lag in [1, 2, 3]:
+                features[f"{col}_lag_{lag}"] = s.shift(lag)
+    
+    # Target
+    y_target = y.shift(-horizon)
+    
+    # Combine
+    X = pd.DataFrame(features, index=panel.index)
+    
+    # Drop rows with missing values
+    valid = X.notna().all(axis=1) & y_target.notna()
+    X = X.loc[valid]
+    y_out = y_target.loc[valid]
+    
+    return X, y_out

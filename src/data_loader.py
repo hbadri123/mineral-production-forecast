@@ -236,15 +236,19 @@ def make_features(panel, mineral, horizon=3):
             for lag in [1, 2, 3]:
                 features[f"{col}_lag_{lag}"] = s.shift(lag)
     
+    # Month dummies for seasonality
+    month = panel.index.month
+    month_dummies = pd.get_dummies(month, prefix="month")
+    month_dummies.index = panel.index
+    features_df = pd.DataFrame(features, index=panel.index)
+    features_df = pd.concat([features_df, month_dummies], axis=1)
+    
     # Target
     y_target = y.shift(-horizon)
     
-    # Combine
-    X = pd.DataFrame(features, index=panel.index)
-    
     # Drop rows with missing values
-    valid = X.notna().all(axis=1) & y_target.notna()
-    X = X.loc[valid]
+    valid = features_df.notna().all(axis=1) & y_target.notna()
+    X = features_df.loc[valid]
     y_out = y_target.loc[valid]
     
     return X, y_out

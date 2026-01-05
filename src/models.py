@@ -2,6 +2,45 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+from catboost import CatBoostRegressor
+
+class LightGBMModel:
+    """LightGBM model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "lightgbm"
+        self.model = LGBMRegressor(
+            n_estimators=200,
+            random_state=random_state,
+            n_jobs=-1,
+            verbosity=-1
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
+
+class CatBoostModel:
+    """CatBoost model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "catboost"
+        self.model = CatBoostRegressor(
+            iterations=200,
+            random_seed=random_state,
+            verbose=False
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
 
 class XGBoostModel:
     """XGBoost model"""

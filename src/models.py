@@ -4,6 +4,25 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
+from statsmodels.tsa.arima.model import ARIMA
+
+class ARIMAModel:
+    """ARIMA model"""
+    
+    def __init__(self):
+        self.name = "arima"
+        self.model = None
+    
+    def fit(self, X, y):
+        # ARIMA works on time series, so we fit on y directly
+        self.model = ARIMA(y, order=(1, 1, 1)).fit()
+        return self
+    
+    def predict(self, X):
+        if self.model is None:
+            raise RuntimeError("Model not fitted")
+        n = len(X)
+        return self.model.forecast(steps=n)
 
 class LightGBMModel:
     """LightGBM model"""

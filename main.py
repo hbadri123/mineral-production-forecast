@@ -1,47 +1,63 @@
 from pathlib import Path
 import pandas as pd
-import numpy as np
 
-from src.data_loader import load_production_sales_xlsx, load_prices_xls, make_features, MINERALS
-from src.models import NaiveBaseline, HistoricalMeanBaseline, RandomForestModel
-from src.evaluation import evaluate_model
+from src.data_loader import load_all_data, build_panel, make_features, MINERALS
+from src.models import (NaiveBaseline, HistoricalMeanBaseline, RandomForestModel,
+                       XGBoostModel, LightGBMModel, CatBoostModel, ARIMAModel)
+from src.evaluation import train_test_evaluation
 
 def main():
     data_dir = Path("data/raw")
     
-    # Load data
-    prod_data = load_production_sales_xlsx(data_dir / "production_sales.xlsx")
-    prices = load_prices_xls(data_dir / "prices.xls")
+    # Load all data
+    sources = load_all_data(data_dir)
+    panel = build_panel(sources)
     
-    # Combine data (simple merge for now)
-    panel = pd.concat([prod_data, prices], axis=1)
-    panel = panel.sort_index()
+    horizons = [3, 6, 12]
+    all_results = []
     
-    # Simple train/test split
-    split_idx = int(len(panel) * 0.7)
-    train_panel = panel.iloc[:split_idx]
-    test_panel = panel.iloc[split_idx:]
+    for mineral in MINERALS:
+        for horizon in horizons:
+            print(f"\n{mineral} - Horizon {horizon}")
+            
+            X, y = make_features(panel, mineral, horizon)
+            
+            if len(X) < 20:
+                print(f"  Not enough data, skipping")
+                continue
+            
+            # Initialize models
+            models = {
+                "naive": NaiveBaseline(),
+                "historical_mean": HistoricalMeanBaseline(),
+                "random_forest": RandomForestModel(),
+                "xgboost": XGBoostModel(),
+                "lightgbm": LightGBMModel(),
+                "catboost": CatBoostModel(),
+                "arima": ARIMAModel()
+            }
+            
+            # Evaluate
+            results = train_test_evaluation(X, y, models)
+            
+            # Store results
+            for model_name, metrics in results.items():
+                if "error" not in metrics:
+                    all_results.append({
+                        "mineral": mineral,
+                        "horizon": horizon,
+                        "model": model_name,
+                        **metrics
+                    })
+            
+            # Print summary
+            print(f"  Best RMSE: {min([r['rmse'] for r in results.values() if 'rmse' in r])}")
     
-    # Test on one mineral
-    mineral = "Gold"
-    horizon = 3
-    
-    X_train, y_train = make_features(train_panel, mineral, horizon)
-    X_test, y_test = make_features(test_panel, mineral, horizon)
-    
-    # Train models
-    models = {
-        "naive": NaiveBaseline(),
-        "historical_mean": HistoricalMeanBaseline(),
-        "random_forest": RandomForestModel()
-    }
-    
-    results = {}
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        results[name] = evaluate_model(y_test.values, y_pred)
-        print(f"{name}: {results[name]}")
+    # Save results
+    if all_results:
+        results_df = pd.DataFrame(all_results)
+        results_df.to_csv("results.csv", index=False)
+        print(f"\nSaved results to results.csv")
 
 if __name__ == "__main__":
     main()

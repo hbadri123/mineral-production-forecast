@@ -56,8 +56,9 @@ def main():
     # Save results
     if all_results:
         results_df = pd.DataFrame(all_results)
-        results_df.to_csv("results.csv", index=False)
-        print(f"\nSaved results to results.csv")
+        Path("results").mkdir(exist_ok=True)
+        results_df.to_csv("results/metrics.csv", index=False)
+        print(f"\nSaved results to results/metrics.csv")
 
 if __name__ == "__main__":
     main()

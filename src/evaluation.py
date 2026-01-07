@@ -1,5 +1,25 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
+def plot_forecasts(y_true, y_pred_dict, title="Forecast vs Actual", save_path=None):
+    """Plot forecasts vs actual"""
+    fig, ax = plt.subplots(figsize=(10, 4))
+    
+    ax.plot(y_true.index, y_true.values, label="Actual", linewidth=2)
+    
+    for name, pred in y_pred_dict.items():
+        ax.plot(y_true.index, pred, label=name, alpha=0.7)
+    
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Production")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    if save_path:
+        plt.savefig(save_path, dpi=150)
+    plt.close()
 
 def rmse(y_true, y_pred):
     """Root Mean Squared Error"""

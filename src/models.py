@@ -6,81 +6,17 @@ from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 from statsmodels.tsa.arima.model import ARIMA
 
-class ARIMAModel:
-    """ARIMA model"""
-    
-    def __init__(self):
-        self.name = "arima"
-        self.model = None
+class BaseModel:
+    """Base class for all models"""
+    name: str
     
     def fit(self, X, y):
-        # ARIMA works on time series, so we fit on y directly
-        self.model = ARIMA(y, order=(1, 1, 1)).fit()
-        return self
+        raise NotImplementedError
     
     def predict(self, X):
-        if self.model is None:
-            raise RuntimeError("Model not fitted")
-        n = len(X)
-        return self.model.forecast(steps=n)
+        raise NotImplementedError
 
-class LightGBMModel:
-    """LightGBM model"""
-    
-    def __init__(self, random_state=42):
-        self.name = "lightgbm"
-        self.model = LGBMRegressor(
-            n_estimators=200,
-            random_state=random_state,
-            n_jobs=-1,
-            verbosity=-1
-        )
-    
-    def fit(self, X, y):
-        self.model.fit(X, y)
-        return self
-    
-    def predict(self, X):
-        return self.model.predict(X)
-
-class CatBoostModel:
-    """CatBoost model"""
-    
-    def __init__(self, random_state=42):
-        self.name = "catboost"
-        self.model = CatBoostRegressor(
-            iterations=200,
-            random_seed=random_state,
-            verbose=False
-        )
-    
-    def fit(self, X, y):
-        self.model.fit(X, y)
-        return self
-    
-    def predict(self, X):
-        return self.model.predict(X)
-
-class XGBoostModel:
-    """XGBoost model"""
-    
-    def __init__(self, random_state=42):
-        self.name = "xgboost"
-        self.model = XGBRegressor(
-            n_estimators=200,
-            learning_rate=0.1,
-            random_state=random_state,
-            n_jobs=-1
-        )
-    
-    def fit(self, X, y):
-        self.model.fit(X, y)
-        return self
-    
-    def predict(self, X):
-        return self.model.predict(X)
-
-class NaiveBaseline:
+class NaiveBaseline(BaseModel):
     """Naive forecast: predict last value"""
     
     def __init__(self):
@@ -95,7 +31,7 @@ class NaiveBaseline:
         else:
             raise ValueError("Need y_level column")
 
-class HistoricalMeanBaseline:
+class HistoricalMeanBaseline(BaseModel):
     """Historical mean baseline"""
     
     def __init__(self):
@@ -113,13 +49,13 @@ class HistoricalMeanBaseline:
             raise RuntimeError("Model not fitted")
         return np.full(len(X), self.mean_, dtype=float)
 
-class RandomForestModel:
+class RandomForestModel(BaseModel):
     """Random Forest model"""
     
     def __init__(self, random_state=42):
         self.name = "random_forest"
         self.model = RandomForestRegressor(
-            n_estimators=100,
+            n_estimators=500,
             random_state=random_state,
             n_jobs=-1
         )
@@ -130,3 +66,80 @@ class RandomForestModel:
     
     def predict(self, X):
         return self.model.predict(X)
+
+class XGBoostModel(BaseModel):
+    """XGBoost model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "xgboost"
+        self.model = XGBRegressor(
+            n_estimators=800,
+            learning_rate=0.05,
+            max_depth=4,
+            random_state=random_state,
+            n_jobs=-1,
+            verbosity=0
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
+
+class LightGBMModel(BaseModel):
+    """LightGBM model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "lightgbm"
+        self.model = LGBMRegressor(
+            n_estimators=1200,
+            learning_rate=0.03,
+            random_state=random_state,
+            n_jobs=-1,
+            verbosity=-1
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
+
+class CatBoostModel(BaseModel):
+    """CatBoost model"""
+    
+    def __init__(self, random_state=42):
+        self.name = "catboost"
+        self.model = CatBoostRegressor(
+            iterations=1500,
+            learning_rate=0.03,
+            random_seed=random_state,
+            verbose=False
+        )
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+        return self
+    
+    def predict(self, X):
+        return self.model.predict(X)
+
+class ARIMAModel(BaseModel):
+    """ARIMA model"""
+    
+    def __init__(self):
+        self.name = "arima"
+        self.model = None
+    
+    def fit(self, X, y):
+        self.model = ARIMA(y, order=(1, 1, 1)).fit()
+        return self
+    
+    def predict(self, X):
+        if self.model is None:
+            raise RuntimeError("Model not fitted")
+        n = len(X)
+        return self.model.forecast(steps=n)

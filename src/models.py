@@ -5,6 +5,62 @@ from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+class SARIMAModel(BaseModel):
+    """SARIMA model"""
+    
+    def __init__(self):
+        self.name = "sarima"
+        self.model = None
+    
+    def fit(self, X, y):
+        self.model = SARIMAX(
+            y,
+            order=(1, 1, 1),
+            seasonal_order=(1, 0, 1, 12),
+            trend="c"
+        ).fit(disp=False)
+        return self
+    
+    def predict(self, X):
+        if self.model is None:
+            raise RuntimeError("Model not fitted")
+        n = len(X)
+        return self.model.forecast(steps=n)
+
+class SARIMAXModel(BaseModel):
+    """SARIMAX model with exogenous variables"""
+    
+    def __init__(self):
+        self.name = "sarimax"
+        self.model = None
+    
+    def fit(self, X, y):
+        # Use subset of features for exog
+        exog_cols = [c for c in X.columns if c.startswith(("y_lag_", "price_lag_", "month_"))]
+        if not exog_cols:
+            exog_cols = X.columns[:5]  # fallback
+        
+        exog = X[exog_cols]
+        self.model = SARIMAX(
+            y,
+            exog=exog,
+            order=(1, 1, 1),
+            seasonal_order=(1, 0, 1, 12),
+            trend="c"
+        ).fit(disp=False)
+        return self
+    
+    def predict(self, X):
+        if self.model is None:
+            raise RuntimeError("Model not fitted")
+        exog_cols = [c for c in X.columns if c.startswith(("y_lag_", "price_lag_", "month_"))]
+        if not exog_cols:
+            exog_cols = X.columns[:5]
+        exog = X[exog_cols]
+        n = len(exog)
+        return self.model.forecast(steps=n, exog=exog)
 
 class BaseModel:
     """Base class for all models"""

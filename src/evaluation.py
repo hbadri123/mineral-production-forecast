@@ -71,3 +71,29 @@ def train_test_evaluation(X, y, models, train_ratio=0.7):
             results[name] = {"error": str(e)}
     
     return results
+
+
+def skill_score(rmse_model, rmse_naive):
+    """Skill score relative to naive baseline"""
+    return 1.0 - (rmse_model / rmse_naive)
+
+def evaluate_model(y_true, y_pred, y_level=None, y_naive=None):
+    """Evaluate model predictions"""
+    metrics = {
+        "rmse": rmse(y_true, y_pred),
+        "mae": mae(y_true, y_pred),
+        "smape": smape(y_true, y_pred)
+    }
+    
+    # Directional accuracy if y_level provided
+    if y_level is not None:
+        true_dir = np.sign(y_true - y_level)
+        pred_dir = np.sign(y_pred - y_level)
+        metrics["directional_accuracy"] = np.mean(true_dir == pred_dir)
+    
+    # Skill score if naive predictions provided
+    if y_naive is not None:
+        rmse_naive = rmse(y_true, y_naive)
+        metrics["skill_rmse_vs_naive"] = skill_score(metrics["rmse"], rmse_naive)
+    
+    return metrics

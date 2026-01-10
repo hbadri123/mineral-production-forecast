@@ -1,0 +1,13 @@
+mineral,horizon,baseline_rmse,best_ml_model,best_ml_rmse,best_ml_skill_score,ml_beats_baseline_count,total_ml_models,ml_win_rate,avg_ml_skill_score,improvement_pct
+Coal,3,4.55,catboost,3.86,0.15,3,3,1.0,0.11,15.16
+Coal,6,5.8,lightgbm,3.88,0.33,3,3,1.0,0.28,33.1
+Coal,12,4.64,catboost,3.83,0.17,3,3,1.0,0.12,17.46
+Copper,3,78.84,random_forest,46.57,0.41,3,3,1.0,0.31,40.93
+Copper,6,56.71,random_forest,53.49,0.06,2,3,0.67,0.03,5.68
+Copper,12,69.02,random_forest,49.01,0.29,3,3,1.0,0.24,28.99
+Gold,3,10.11,random_forest,56.22,-4.56,0,3,0.0,-5.24,-456.08
+Gold,6,16.18,catboost,60.46,-2.74,0,3,0.0,-2.78,-273.67
+Gold,12,24.39,catboost,52.5,-1.15,0,3,0.0,-1.2,-115.25
+Iron ore,3,6.15,lightgbm,5.69,0.07,2,3,0.67,0.01,7.48
+Iron ore,6,4.76,lightgbm,5.68,-0.19,0,3,0.0,-0.29,-19.33
+Iron ore,12,5.16,random_forest,5.88,-0.14,0,3,0.0,-0.24,-13.95
